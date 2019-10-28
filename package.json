@@ -2,6 +2,7 @@
   "name": "victory-sonification",
   "version": "0.1.0",
   "private": true,
+  "homepage": "http://www.columbia.edu/~nb2413/victory-sonification",
   "dependencies": {
     "bootstrap": "^4.3.1",
     "react": "^16.11.0",
