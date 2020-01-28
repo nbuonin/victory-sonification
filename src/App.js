@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -110,16 +110,30 @@ const createPitchArray = (array) => {
 
 
 function GraphContainer() {
-    const synth = useRef(new Synth().toMaster());
+    const synth = useRef(null);
+    // Transport is a Global instantiated when Tone.js loads
+    const transport = useRef(Transport);
+
+    useEffect(() => {
+        synth.current = new Synth().toMaster();
+    });
+
+
     const handlePlay = (evt) =>{
-        synth.current.sync();
+        // This was the cause of much consternation. If the transport has
+        // already been played, cancel all events and reschedule them
+        if (transport.current.state === 'started') {
+           transport.current.cancel();
+        }
         let pitchArray = createPitchArray(DATA);
         let sequence = new Sequence(function(time, pitch) {
             synth.current.triggerAttackRelease(pitch)
-        }, pitchArray, "8n");
+        }, pitchArray, "4n");
         sequence.loop = false;
-        sequence.start(0);
-        Transport.start();
+        sequence.start();
+        // Next step, figure out how to make it stop...
+        sequence.stop(4);
+        transport.current.start();
     }
     return (
         <>
