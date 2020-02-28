@@ -119,21 +119,25 @@ function GraphContainer() {
     });
 
 
+
     const handlePlay = (evt) =>{
-        // This was the cause of much consternation. If the transport has
-        // already been played, cancel all events and reschedule them
+        // This handles two states of the transport: 'started' and 'stoppped'
+        // If it's started, stop; else start
         if (transport.current.state === 'started') {
-           transport.current.cancel();
+           transport.current.stop();
+        } else {
+            let pitchArray = createPitchArray(DATA);
+            let sequence = new Sequence(function(time, pitch) {
+                synth.current.triggerAttackRelease(pitch, '8n', time)
+            }, pitchArray, "8n");
+            sequence.loop = false;
+            sequence.start(0);
+
+            // Start the transport and schedule it
+            // to end when the sequence ends
+            transport.current.start();
+            transport.current.stop('+' + String(sequence.loopEnd));
         }
-        let pitchArray = createPitchArray(DATA);
-        let sequence = new Sequence(function(time, pitch) {
-            synth.current.triggerAttackRelease(pitch)
-        }, pitchArray, "4n");
-        sequence.loop = false;
-        sequence.start();
-        // Next step, figure out how to make it stop...
-        sequence.stop(4);
-        transport.current.start();
     }
     return (
         <>
