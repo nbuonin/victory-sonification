@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -110,19 +110,26 @@ const createPitchArray = (array) => {
 
 
 function GraphContainer() {
-    const synth = useRef(null);
-    // Transport is a Global instantiated when Tone.js loads
+/* The useRef hook is needed to provide a mutable box for the life of the
+   component. Use them to bring in globals instantiated when Tone.js loads */
     const transport = useRef(Transport);
+    const synth = useRef(new Synth().toMaster());
 
-    useEffect(() => {
-        synth.current = new Synth().toMaster();
-    });
-
-
+    const [isPlaying, setIsPlaying] = useState(null);
 
     const handlePlay = (evt) =>{
+        // First, add event handlers to the transport so that the component is
+        // aware of the state that its in
+        if (isPlaying === null) {
+            transport.current.on('start', () => {
+                setIsPlaying(true);
+            });
+            transport.current.on('stop', () => {
+                setIsPlaying(false);
+            });
+        }
+
         // This handles two states of the transport: 'started' and 'stoppped'
-        // If it's started, stop; else start
         if (transport.current.state === 'started') {
            transport.current.stop();
         } else {
@@ -146,7 +153,7 @@ function GraphContainer() {
                 </VictoryBar>
             </VictoryChart>
             <Button onClick={handlePlay}>
-                Play
+                {isPlaying ? 'Stop' : 'Play'}
             </Button>
         </>
     );
