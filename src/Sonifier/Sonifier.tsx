@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { Synth, Transport, Sequence } from 'tone';
+import React, { useState, useRef, useEffect } from 'react';
+//import { Synth, Transport, Sequence } from 'tone';
+import * as Tone from 'tone';
 
 import { SonifierProps } from "./Sonifier.types";
 
@@ -76,45 +77,51 @@ const createPitchArray = (array) => {
 
 const withSonification = <T extends object>(Component: React.ComponentType<T>): React.FC<T> => {
     return (props: T) => {
-        const transport = useRef(Transport);
-        const synth = useRef(new Synth().toMaster());
+        const transport = useRef(Tone.Transport);
+        const synth = useRef(new Tone.Synth().toDestination());
 
-        const [isPlaying, setIsPlaying] = useState(null);
+        const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-        const handlePlay = (evt) =>{
-            // First, add event handlers to the transport so that the component is
-            // aware of the state that its in
-            if (isPlaying === null) {
-                transport.current.on('start', () => {
-                    setIsPlaying(true);
-                });
-                transport.current.on('stop', () => {
-                    setIsPlaying(false);
-                });
-            }
+        useEffect(() => {
+            transport.current.on('start', () => {
+                setIsPlaying(true);
+            });
+            transport.current.on('stop', () => {
+                setIsPlaying(false);
+            });
 
+        }, [])
+
+        const handlePlay: React.MouseEventHandler = (e) => {
+            // TODO: Resolve console error with scheduling sequence time
             // This handles two states of the transport: 'started' and 'stoppped'
             if (transport.current.state === 'started') {
                transport.current.stop();
             } else {
-                let pitchArray = createPitchArray(props.children.props.data);
-                let sequence = new Sequence(function(time, pitch) {
+                const pprops: any = props;
+                let pitchArray = createPitchArray(pprops.children.props.data);
+                let sequence = new Tone.Sequence(function(time, pitch) {
                     synth.current.triggerAttackRelease(pitch, '8n', time)
                 }, pitchArray, "8n");
                 sequence.loop = false;
                 sequence.start(0);
+                const sequenceLength = pitchArray.reduce((acc, val) => {
+                    acc += Tone.Time('8n').toSeconds();
+                    return acc;
+                }, 0)
 
                 // Start the transport and schedule it
                 // to end when the sequence ends
                 transport.current.start();
-                transport.current.stop('+' + String(sequence.loopEnd));
+                transport.current.stop('+' + String(sequenceLength));
             }
         }
+
         return (
             <>
                 <Component {...props}/>
                 <button onClick={handlePlay}>
-                    Play
+                    {isPlaying ? 'Stop' : 'Play'}
                 </button>
             </>
         )
