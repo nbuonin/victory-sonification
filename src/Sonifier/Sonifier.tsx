@@ -76,7 +76,9 @@ const createPitchArray = (array) => {
 }
 
 const withSonification = <T extends object>(Component: React.ComponentType<T>): React.FC<T> => {
-    return (props: T) => {
+    return (props: T & {children?: React.ReactElement}) => {
+        const compType = Object.getPrototypeOf(props.children.type);
+
         const transport = useRef(Tone.Transport);
         const synth = useRef(new Tone.Synth().toDestination());
 
@@ -98,8 +100,7 @@ const withSonification = <T extends object>(Component: React.ComponentType<T>): 
             if (transport.current.state === 'started') {
                transport.current.stop();
             } else {
-                const pprops: any = props;
-                let pitchArray = createPitchArray(pprops.children.props.data);
+                let pitchArray = createPitchArray(compType.getData(props.children.props));
                 let sequence = new Tone.Sequence(function(time, pitch) {
                     synth.current.triggerAttackRelease(pitch, '8n', time)
                 }, pitchArray, "8n");
