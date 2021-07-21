@@ -5,7 +5,6 @@ $(JS_SENTINAL): package.json
 	rm -rf $(NODE_MODULES)
 	npm install
 	touch $(JS_SENTINAL)
-.PHONY: $(JS_SENTINAL)
 
 runserver: $(JS_SENTINAL)
 	npm run storybook
